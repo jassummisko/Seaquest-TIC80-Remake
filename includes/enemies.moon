@@ -34,9 +34,9 @@ class Enemy
 		@alive = false
 
 	edge: =>
-		if @x < -24
+		if (@x < -24) and @flip == 0
 			@alive = false
-		if @x > scr.width+16
+		if (@x > scr.width+16) and @flip == 1
 			@alive = false
 
 class Fishie extends Enemy
@@ -94,13 +94,11 @@ class PatrolSub extends Enemy
 		@animframe = 1
 		@animspeed = 4
 		
-
 	update: =>
 		super!
 		if gameMode == modes.play
 			@attack!
 		@animate!
-		
 
 	animate: =>
 		if @tick % @animspeed == 0
@@ -123,3 +121,26 @@ class PatrolSub extends Enemy
 	die: =>
 		super!
 		splash(@x+4, @y+4, 50, 4, 2)
+
+class SurfacePatrol extends Enemy
+	spr: 356
+	hitbox: {1, 7, 14, 5}
+	w: 2
+	h: 2
+	spd: 0.5
+	transparency: 11
+	new: (...) =>
+		super ...
+
+	update: =>
+		@tick += 1
+		@move!
+		@collision!
+		@edge!
+
+	move: =>
+		@x -= @spd
+
+	die: =>
+		super!
+		splash(@x+8, @y+8, 100, 4, 2)

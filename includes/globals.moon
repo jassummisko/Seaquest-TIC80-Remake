@@ -9,6 +9,7 @@ types = {
 	Player: 0
 	Torpedo: 1
 	Enemy: 2
+	Score: 3
 }
 bn = {
 	up: 0

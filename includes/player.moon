@@ -137,10 +137,15 @@ class Submarine
 
 	collision: =>
 		for obj in *objs
-			if obj.type == types.Enemy
-				if collide(obj, self)
+			if collide(obj, self)
+				if obj.type == types.Enemy
 					@die!
 					obj\die!
+
+				if obj.type == types.Score and @rescued < @maxRescued
+					obj\collect!
+					@rescued += 1
+
 
 	die: =>
 		@alive = false

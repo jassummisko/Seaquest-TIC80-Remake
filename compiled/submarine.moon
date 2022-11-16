@@ -23,6 +23,7 @@ types = {
 	Player: 0
 	Torpedo: 1
 	Enemy: 2
+	Score: 3
 }
 bn = {
 	up: 0
@@ -169,6 +170,34 @@ class Bubble
 
 -- [/TQ-Bundler: includes.particles]
 
+-- [TQ-Bundler: includes.human]
+
+class Human
+    type: types.Score
+    spr: 350
+    hitbox: {0, 0, 16, 8}
+    w: 2
+    h: 1
+    new: (x, y, flip) =>
+        @x = x
+        @y = y
+        @flip = flip
+        @alive = true
+
+    update: =>
+        @move!
+
+    draw: =>
+        spr(@spr, @x, @y, 0, 1, @flip, 0, @w, @h)
+
+    move: =>
+        @x -= 1 - @flip*2
+
+    collect: =>
+        @alive = false
+
+-- [/TQ-Bundler: includes.human]
+
 -- [TQ-Bundler: includes.player]
 
 class Torpedo
@@ -310,10 +339,15 @@ class Submarine
 
 	collision: =>
 		for obj in *objs
-			if obj.type == types.Enemy
-				if collide(obj, self)
+			if collide(obj, self)
+				if obj.type == types.Enemy
 					@die!
 					obj\die!
+
+				if obj.type == types.Score and @rescued < @maxRescued
+					obj\collect!
+					@rescued += 1
+
 
 	die: =>
 		@alive = false
@@ -365,9 +399,9 @@ class Enemy
 		@alive = false
 
 	edge: =>
-		if @x < -24
+		if (@x < -24) and @flip == 0
 			@alive = false
-		if @x > scr.width+16
+		if (@x > scr.width+16) and @flip == 1
 			@alive = false
 
 class Fishie extends Enemy
@@ -425,13 +459,11 @@ class PatrolSub extends Enemy
 		@animframe = 1
 		@animspeed = 4
 		
-
 	update: =>
 		super!
 		if gameMode == modes.play
 			@attack!
 		@animate!
-		
 
 	animate: =>
 		if @tick % @animspeed == 0
@@ -455,15 +487,40 @@ class PatrolSub extends Enemy
 		super!
 		splash(@x+4, @y+4, 50, 4, 2)
 
+class SurfacePatrol extends Enemy
+	spr: 356
+	hitbox: {1, 7, 14, 5}
+	w: 2
+	h: 2
+	spd: 0.5
+	transparency: 11
+	new: (...) =>
+		super ...
+
+	update: =>
+		@tick += 1
+		@move!
+		@collision!
+		@edge!
+
+	move: =>
+		@x -= @spd
+
+	die: =>
+		super!
+		splash(@x+8, @y+8, 100, 4, 2)
+
 -- [/TQ-Bundler: includes.enemies]
 
 
 export BOOT=->
 	export plr = Submarine!
-	spawn(plr)
-	spawn(Fishie(-16, 60, 1))
-	spawn(Fishie(scr.width+8, 80, 0))
-	spawn(PatrolSub(scr.width+8, 100, 0))
+	spawn plr 
+	spawn SurfacePatrol(scr.width+8, 8, 0)
+	spawn Fishie(-16, 60, 1)
+	spawn Fishie(scr.width+8, 80, 0)
+	spawn PatrolSub(scr.width+8, 100, 0)
+	spawn Human(40, 40, 0)
 
 export TIC=->
 	cls 0
