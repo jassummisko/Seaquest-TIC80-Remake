@@ -8,10 +8,11 @@ class Enemy
 		@alive = true
 
 	update: =>
-		@tick += 1
-		@move!
-		@collision!
-		@edge!
+		if gameMode == modes.play
+			@tick += 1
+			@move!
+			@collision!
+			@edge!
 
 	move: =>
 		--add per enemy

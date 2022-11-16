@@ -24,5 +24,7 @@ modes = {
 	oxygenRefill: 0
 	play: 1
 }
+
+gameMode = modes.oxygenRefill
 particles = {}
 objs = {}

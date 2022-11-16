@@ -33,15 +33,23 @@ class Submarine
 		@yvel = 0
 		@tick = 0
 		@flip = 0
+		@spd = 2
 		@animSpeed = 3
 		@hitbox = {1, 7, 28, 12}
 		@sprs = {256, 260, 264, 268, 
 				304, 308, 312, 308,
 				304, 268, 264, 260}
 		@frame = 1
+
+		--Oxygen mechanic
 		@oxygen = 1
 		@maxOxygen = 33 *sec
-		@mode = modes.oxygenRefill
+		@refillSpeed = 12
+
+		--Rescue mechanic
+		@rescued = 0
+		@maxRescued = 6
+
 		@alive = true
  
 	update: =>
@@ -52,16 +60,15 @@ class Submarine
 		@move!
 		@animate!
 			
-
 	draw: =>
 		spr(@sprs[@frame], @x, @y, 11, 1, @flip, 0, @w, @h)
 
 	control: =>
-		if @mode == modes.play
+		if gameMode == modes.play
 			if btn bn.up
-				@yvel = -2
+				@yvel = -@spd
 			elseif btn bn.down
-				@yvel = 2
+				@yvel = @spd
 			else
 				@yvel = 0
 
@@ -79,14 +86,14 @@ class Submarine
 
 	move: =>
 		@y = min(max(@y+@yvel, 8), scr.height-8*@h)
-		@x += @xvel
+		@x = min(max(@x+@xvel, 0), scr.width-8*@w)
 
 	sound: =>
 		if t%((@animSpeed*#@sprs/2)) == 0
 			sfx(0)
 
 	animate: =>
-		if @mode == modes.play
+		if gameMode == modes.play
 			if t%(@animSpeed) == 0
 				@frame = ((@frame)%#@sprs)+1
 			if t%((@animSpeed*#@sprs/2)) == 0
@@ -111,15 +118,20 @@ class Submarine
 			add(particles, Bubble(x, y, 6))
 
 	oxygenControl: =>
-		if @mode == modes.play
-			@oxygen-=1
-		elseif @mode == modes.oxygenRefill
+		
+		if gameMode == modes.play
+			if @y > 10
+				@oxygen-=1
+			if @maxOxygen - @oxygen > 50 and @y <= 10
+				gameMode = modes.oxygenRefill
+
+		elseif gameMode == modes.oxygenRefill
 			unless @oxygen >= @maxOxygen
-				@oxygen += ceil((@maxOxygen - @oxygen) * .1)
+				@oxygen += @refillSpeed
 				sfx(2, flr(@oxygen / 200), 2, 3)
 			else
-				@mode = modes.play 
-		
+				gameMode = modes.play 
+
 		if @oxygen <= 0
 			@die!
 
