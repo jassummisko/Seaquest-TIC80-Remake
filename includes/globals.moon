@@ -20,6 +20,12 @@ bn = {
 guiSpr = {
 	o2: 48
 }
+lanes = {
+	40,
+	60,
+	80,
+	100
+}
 modes = {
 	oxygenRefill: 0
 	play: 1

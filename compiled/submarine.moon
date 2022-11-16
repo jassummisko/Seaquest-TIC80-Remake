@@ -34,6 +34,12 @@ bn = {
 guiSpr = {
 	o2: 48
 }
+lanes = {
+	40,
+	60,
+	80,
+	100
+}
 modes = {
 	oxygenRefill: 0
 	play: 1
@@ -325,6 +331,9 @@ class Submarine
 
 class Enemy
 	type: types.Enemy
+	w: 1
+	h: 1
+	transparency: 0
 	new: (x, y, flip) =>
 		@x = x
 		@y = y
@@ -343,7 +352,7 @@ class Enemy
 		--add per enemy
 
 	draw: =>
-		spr(@spr, @x, @y, 0, 1, @flip, 0)
+		spr(@spr, @x, @y, @transparency, 1, @flip, 0, @w, @h)
 	
 	collision: =>
 		for obj in *objs
@@ -356,15 +365,17 @@ class Enemy
 		@alive = false
 
 	edge: =>
-		if @x < -16
+		if @x < -24
 			@alive = false
-		if @x > scr.width+8
+		if @x > scr.width+16
 			@alive = false
 
 class Fishie extends Enemy
 	spr: 348
-	hitbox: {0, 1, 8, 5}
+	hitbox: {0, 2, 16, 6}
 	spd: 1
+	w: 2
+	h: 1
 	new: (...) =>
 		super ...
 
@@ -385,14 +396,74 @@ class Fishie extends Enemy
 		super!
 		splash(@x+4, @y+4, 10, 4, 7)
 
+class SmallTorpedos extends Enemy
+	spr: 333
+	hitbox: {1, 1, 5, 5}
+	spd: 2
+
+	new: (...) =>
+		super ...
+	
+	move: =>
+		if @flip == 0 then @x -= @spd else @x += @spd
+
+	die: =>
+		super!
+		splash(@x+4, @y+4, 10, 4, 2)
+
+class PatrolSub extends Enemy
+	sprs: {352, 354}
+	spr: 352
+	hitbox: {0, 6, 16, 6}
+	w: 2
+	h: 2
+	spd: 1
+	transparency: 11
+	new: (...) =>
+		super ...
+		@cooldown = 0
+		@animframe = 1
+		@animspeed = 4
+		
+
+	update: =>
+		super!
+		if gameMode == modes.play
+			@attack!
+		@animate!
+		
+
+	animate: =>
+		if @tick % @animspeed == 0
+			@animframe = (@animframe % #@sprs)+1
+		@spr = @sprs[@animframe]
+
+	attack: =>
+		@cooldown = max(@cooldown-1, 0)
+		if @tick % 30 == 0
+			if (rnd! > 0.5) and (@cooldown == 0)
+				spawn(SmallTorpedos(@x+(@flip*6), @y+6, @flip))
+				@cooldown = 120
+
+	move: =>
+		if @flip == 0 then @x -= @spd else @x += @spd
+
+	draw: =>
+		super!
+		
+	die: =>
+		super!
+		splash(@x+4, @y+4, 50, 4, 2)
+
 -- [/TQ-Bundler: includes.enemies]
 
 
 export BOOT=->
 	export plr = Submarine!
 	spawn(plr)
-	spawn(Fishie(-8, 60, 1))
-	spawn(Fishie(scr.width, 90, 0))
+	spawn(Fishie(-16, 60, 1))
+	spawn(Fishie(scr.width+8, 80, 0))
+	spawn(PatrolSub(scr.width+8, 100, 0))
 
 export TIC=->
 	cls 0
